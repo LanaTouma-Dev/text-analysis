@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CATEGORIES } from '../../core/data/sentinel.data';
+import { ApiService } from '../../core/services/api.service';
 
 @Component({
   selector: 'app-settings',
@@ -14,8 +15,11 @@ import { CATEGORIES } from '../../core/data/sentinel.data';
           <h1 class="page-title">Settings</h1>
           <p class="page-sub">System configuration · Sentinel v3.4</p>
         </div>
-        <button class="save-btn" (click)="saved.set(true)">
-          @if (saved()) {
+        <button class="save-btn" (click)="save()" [disabled]="saving()">
+          @if (saving()) {
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin .6s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Saving…
+          } @else if (saved()) {
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>
             Saved
           } @else {
@@ -243,11 +247,15 @@ import { CATEGORIES } from '../../core/data/sentinel.data';
                    flex-wrap: wrap; }
 
     @media (max-width: 900px) { .settings-grid { grid-template-columns: 1fr; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
   `]
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
+  private api = inject(ApiService);
+
   categories = CATEGORIES;
-  saved = signal(false);
+  saved  = signal(false);
+  saving = signal(false);
 
   model = 'marbert';
   explModel = 'acegpt';
@@ -257,6 +265,40 @@ export class SettingsComponent {
   liveFeed = true;
 
   catThresholds: Record<string, number> = Object.fromEntries(
-    CATEGORIES.map(c => [c.id, c.id === 'hate' || c.id === 'violence' || c.id === 'scam' ? 65 : 70])
+    CATEGORIES.map(c => [c.id, 70])
   );
+
+  ngOnInit() {
+    this.api.getThresholds().subscribe({
+      next: data => {
+        data.forEach((t: any) => {
+          // API returns 0.0–1.0, UI uses 0–100 integers
+          this.catThresholds[t.category_id] = Math.round(t.threshold * 100);
+        });
+      },
+      error: err => console.error('Failed to load thresholds', err),
+    });
+  }
+
+  save() {
+    this.saving.set(true);
+    this.saved.set(false);
+
+    const payload = Object.entries(this.catThresholds).map(([category_id, pct]) => ({
+      category_id,
+      threshold: pct / 100,
+    }));
+
+    this.api.updateThresholds(payload).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.saved.set(true);
+        setTimeout(() => this.saved.set(false), 3000);
+      },
+      error: err => {
+        this.saving.set(false);
+        console.error('Failed to save thresholds', err);
+      },
+    });
+  }
 }
