@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CURRENT_USER } from '../../core/data/sentinel.data';
 import { ThemeService } from '../../core/services/theme.service';
+import { AuthService } from '../../core/services/auth.service';
 
 const CRUMBS: Record<string, [string, string]> = {
   overview:   ['Dashboard',  'Overview'],
@@ -74,15 +75,29 @@ const CRUMBS: Record<string, [string, string]> = {
           <div class="name">{{ user.name }}</div>
           <div class="role">{{ user.role }}</div>
         </div>
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </div>
+
+      <!-- Logout -->
+      <button class="icon-btn" title="Sign out" (click)="logout()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
     </header>
   `
 })
 export class TopbarComponent implements OnInit, OnDestroy {
   router    = inject(Router);
   themeSvc  = inject(ThemeService);
+  auth      = inject(AuthService);
   user      = CURRENT_USER;
+
+  logout() {
+    this.auth.logout();
+    this.router.navigate(['/login']);
+  }
 
   private _now      = signal(new Date());
   private _interval: ReturnType<typeof setInterval> | null = null;

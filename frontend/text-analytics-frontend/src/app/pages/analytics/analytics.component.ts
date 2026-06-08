@@ -1,5 +1,6 @@
-import { Component, signal, computed, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
-import { CATEGORIES, MOD_PERFORMANCE, genVolume24h } from '../../core/data/sentinel.data';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
+import { CATEGORIES } from '../../core/data/sentinel.data';
+import { ApiService } from '../../core/services/api.service';
 import { PillGroupComponent } from '../../shared/components/pill-group.component';
 
 // Simple donut chart built with SVG path math
@@ -34,7 +35,7 @@ function donutPath(cx: number, cy: number, r: number, pct: number): string {
           </div>
           <div class="stat-body">
             <div class="stat-label">Total Approved</div>
-            <div class="stat-val" style="color:var(--safe)">{{ period() === '7D' ? '6.18M' : period() === '30D' ? '26.4M' : '78.2M' }}</div>
+            <div class="stat-val" style="color:var(--safe)">{{ summary().total_24h - summary().blocked_24h }}</div>
           </div>
         </div>
         <div class="card stat-card">
@@ -43,7 +44,7 @@ function donutPath(cx: number, cy: number, r: number, pct: number): string {
           </div>
           <div class="stat-body">
             <div class="stat-label">Total Blocked</div>
-            <div class="stat-val" style="color:var(--danger)">{{ period() === '7D' ? '89.4K' : period() === '30D' ? '382K' : '1.1M' }}</div>
+            <div class="stat-val" style="color:var(--danger)">{{ summary().blocked_24h }}</div>
           </div>
         </div>
         <div class="card stat-card">
@@ -52,7 +53,7 @@ function donutPath(cx: number, cy: number, r: number, pct: number): string {
           </div>
           <div class="stat-body">
             <div class="stat-label">Escalated</div>
-            <div class="stat-val" style="color:var(--warn)">{{ period() === '7D' ? '1,247' : period() === '30D' ? '5,318' : '15.8K' }}</div>
+            <div class="stat-val" style="color:var(--warn)">{{ summary().pending }}</div>
           </div>
         </div>
         <div class="card stat-card">
@@ -61,7 +62,7 @@ function donutPath(cx: number, cy: number, r: number, pct: number): string {
           </div>
           <div class="stat-body">
             <div class="stat-label">AI Accuracy</div>
-            <div class="stat-val" style="color:var(--primary)">97.3%</div>
+            <div class="stat-val" style="color:var(--primary)">{{ summary().block_rate }}%</div>
           </div>
         </div>
       </div>
@@ -234,10 +235,19 @@ function donutPath(cx: number, cy: number, r: number, pct: number): string {
     }
   `]
 })
-export class AnalyticsComponent {
+export class AnalyticsComponent implements OnInit {
+  private api = inject(ApiService);
   period = signal('7D');
   categories = CATEGORIES;
-  modPerf = MOD_PERFORMANCE;
+  modPerf: any[] = [];
+  // MOD_PERFORMANCE removed — now using real API data
+  summary = signal<any>({ total_24h: 0, flagged_24h: 0, blocked_24h: 0, pending: 0, block_rate: 0 });
+  categoryStats = signal<any[]>([]);
+
+  ngOnInit() {
+    this.api.getSummary().subscribe({ next: d => this.summary.set(d) });
+    this.api.getCategories().subscribe({ next: d => this.categoryStats.set(d) });
+  }
 
   heatmapDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   heatmapHours = Array.from({ length: 24 }, (_, i) => i % 4 === 0 ? String(i).padStart(2, '0') : '');

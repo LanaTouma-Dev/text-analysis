@@ -27,16 +27,31 @@ import { AuthService } from '../../core/services/auth.service';
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      background: var(--bg);
+    }
+
+    .visual-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('/6e76069b-7764-4a87-afb4-f3c40e2f549d.jpg');
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.45) saturate(0.8);
+    }
+
+    .visual-overlay {
+      position: absolute;
+      inset: 0;
       background:
-        radial-gradient(900px 700px at 40% 50%, rgba(108,99,255,.12), transparent 65%),
-        radial-gradient(600px 600px at 80% 20%, rgba(58,134,255,.08), transparent 60%),
-        var(--bg);
+        linear-gradient(to right, transparent 60%, var(--surface) 100%),
+        linear-gradient(to top, rgba(13,27,62,.8) 0%, transparent 40%);
     }
 
     .radar-wrap {
       position: relative;
       width: 420px;
       height: 420px;
+      z-index: 1;
     }
 
     .radar-ring {
@@ -94,6 +109,7 @@ import { AuthService } from '../../core/services/auth.service';
     .visual-tagline {
       position: absolute;
       bottom: 48px;
+      z-index: 1;
       left: 0; right: 0;
       text-align: center;
     }
@@ -159,6 +175,7 @@ import { AuthService } from '../../core/services/auth.service';
       padding: 60px 52px;
       background: var(--surface);
       border-left: 1px solid var(--border);
+      box-shadow: -24px 0 80px rgba(0, 0, 0, 0.6), -4px 0 24px rgba(0, 0, 0, 0.4);
     }
 
     .sys-ident {
@@ -342,6 +359,8 @@ import { AuthService } from '../../core/services/auth.service';
 
       <!-- Left visual panel -->
       <div class="visual">
+        <div class="visual-bg"></div>
+        <div class="visual-overlay"></div>
         <div class="ar-watermark">
           @for (w of arWords; track w) {
             <span>{{ w }}</span>
@@ -349,19 +368,6 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
         <div class="scanline"></div>
 
-        <div class="radar-wrap">
-          <div class="radar-ring"></div>
-          <div class="radar-ring"></div>
-          <div class="radar-ring"></div>
-          <div class="radar-sweep"></div>
-          <div class="radar-center">
-            <svg class="radar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-        </div>
 
         <div class="visual-tagline">
           <h2>Sentinel · SMS Intelligence</h2>
