@@ -40,10 +40,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
     'channels',
+    'corsheaders',
     'sentinel',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -158,6 +160,12 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'AI-powered Arabic SMS moderation system for Syriatel',
     'VERSION': '1.0.0',
 }
+
+# CORS
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:4200',
+]
+CORS_ALLOW_CREDENTIALS = True
 
 # Celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'

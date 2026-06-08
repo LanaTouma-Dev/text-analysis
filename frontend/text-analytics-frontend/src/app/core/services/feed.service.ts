@@ -1,25 +1,48 @@
-import { Injectable, signal, OnDestroy } from '@angular/core';
+import { Injectable, signal, OnDestroy, inject } from '@angular/core';
 import { FeedMessage } from '../models/sentinel.models';
-import { makeFeedMessage } from '../data/sentinel.data';
+import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class FeedService implements OnDestroy {
-  readonly messages = signal<FeedMessage[]>(
-    Array.from({ length: 20 }, (_, i) => makeFeedMessage(100000 - i))
-  );
-  readonly paused = signal(false);
+  readonly messages = signal<FeedMessage[]>([]);
+  readonly paused   = signal(false);
+  readonly connected = signal(false);
 
-  private counter = 100001;
-  private intervalId: ReturnType<typeof setInterval> | null = null;
+  private auth = inject(AuthService);
+  private ws: WebSocket | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor() { this.start(); }
+  constructor() {
+    this.connect();
+  }
 
-  private start(): void {
-    this.intervalId = setInterval(() => {
+  private connect(): void {
+    const token = localStorage.getItem('access_token');
+    const url   = `${environment.wsBase}/feed/${token ? '?token=' + token : ''}`;
+
+    this.ws = new WebSocket(url);
+
+    this.ws.onopen = () => {
+      this.connected.set(true);
+      console.log('Feed WebSocket connected');
+    };
+
+    this.ws.onmessage = (event) => {
       if (this.paused()) return;
-      const m = makeFeedMessage(this.counter++);
-      this.messages.update(xs => [m, ...xs].slice(0, 150));
-    }, 900 + Math.random() * 700);
+      const msg = JSON.parse(event.data) as FeedMessage;
+      this.messages.update(xs => [msg, ...xs].slice(0, 150));
+    };
+
+    this.ws.onclose = () => {
+      this.connected.set(false);
+      // Auto-reconnect after 3s
+      this.reconnectTimer = setTimeout(() => this.connect(), 3000);
+    };
+
+    this.ws.onerror = (err) => {
+      console.error('Feed WebSocket error', err);
+    };
   }
 
   togglePause(): void {
@@ -27,6 +50,7 @@ export class FeedService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.intervalId) clearInterval(this.intervalId);
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    if (this.ws) this.ws.close();
   }
 }
