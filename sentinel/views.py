@@ -6,6 +6,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
+
+
+class IsSeniorModerator(BasePermission):
+    """Tier 2+ only — Senior Moderator or Admin."""
+    def has_permission(self, request, view):
+        return (
+            request.user and
+            request.user.is_authenticated and
+            hasattr(request.user, 'profile') and
+            request.user.profile.tier >= 2
+        )
 
 from .models import ModerationDecision, AuditLog, CategoryThreshold, ActiveLearningEntry
 from .serializers import (
@@ -208,7 +220,12 @@ class AuditLogView(APIView):
 # ---------------------------------------------------------------------------
 
 class ThresholdView(APIView):
-    """GET/PUT /api/v1/thresholds/"""
+    """GET/PUT /api/v1/thresholds/  — PUT requires Senior Moderator (tier 2+)"""
+
+    def get_permissions(self):
+        if self.request.method == 'PUT':
+            return [IsSeniorModerator()]
+        return [IsAuthenticated()]
 
     def get(self, request):
         thresholds = CategoryThreshold.objects.all()
@@ -237,7 +254,7 @@ class ThresholdView(APIView):
 
 class HealthView(APIView):
     """GET /api/v1/health/"""
-    permission_classes = []  # public
+    permission_classes = [AllowAny]
 
     def get(self, request):
         import httpx
