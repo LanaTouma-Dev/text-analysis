@@ -160,6 +160,27 @@ def write_to_db(payload: dict):
         status='pending' if payload['is_flagged'] else 'safe',
         infer_latency_ms=payload.get('infer_latency_ms'),
     )
+
+    # Push to live feed WebSocket
+    try:
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        layer = get_channel_layer()
+        async_to_sync(layer.group_send)('feed', {
+            'type': 'feed.message',
+            'payload': {
+                'id':     payload['message_id'],
+                'status': 'flagged' if payload['is_flagged'] else 'safe',
+                'text':   payload['body'],
+                'cat':    payload['flagged_cats'][0][0] if payload['flagged_cats'] else None,
+                'conf':   payload['flagged_cats'][0][1] if payload['flagged_cats'] else None,
+                'lat':    payload.get('infer_latency_ms'),
+                'ts':     timezone.now().isoformat(),
+            }
+        })
+    except Exception as e:
+        print(f'WS push failed: {e}')
+
     return msg.id
 
 
