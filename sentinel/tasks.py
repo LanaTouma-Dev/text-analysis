@@ -3,7 +3,7 @@ from celery import chain
 from config.celery import app
 
 INFER_URL   = 'http://localhost:8001/infer'
-EXPLAIN_URL = 'http://172.26.235.1:8003/v1/chat/completions'  # teammate's AceGPT (llama.cpp)
+EXPLAIN_URL = 'http://10.215.181.1:8003/v1/chat/completions'  # teammate's AceGPT (llama.cpp)
 
 
 # ---------------------------------------------------------------------------

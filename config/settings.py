@@ -166,6 +166,14 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
 ]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'authorization',
+    'content-type',
+    'origin',
+    'x-requested-with',
+]
 
 # Celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'

@@ -268,6 +268,6 @@ class HealthView(APIView):
 
         return Response({
             'marbert': check('http://localhost:8001/health'),
-            'acegpt':  check('http://172.26.235.1:8003/health'),
+            'acegpt':  check('http://10.215.181.1:8003/health'),
             'django':  'ok',
         })

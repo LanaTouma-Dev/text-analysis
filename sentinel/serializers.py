@@ -16,10 +16,17 @@ class QueueMessageSerializer(serializers.ModelSerializer):
     def get_en(self, obj):
         return ''  # translation not implemented yet
 
+    conf = serializers.SerializerMethodField()
+
+    def get_conf(self, obj):
+        if not obj.flagged_categories:
+            return 0.0
+        return round(obj.flagged_categories[0][1], 4)
+
     class Meta:
         model  = ModerationDecision
         fields = ['id', 'ts', 'sender', 'cats', 'ar', 'en',
-                  'ar_expl', 'en_expl', 'status']
+                  'ar_expl', 'en_expl', 'conf', 'status']
 
 
 class DecisionDetailSerializer(serializers.ModelSerializer):
