@@ -10,15 +10,17 @@ export class ApiService {
   constructor(private http: HttpClient) {}
 
   // Queue
-  getQueue(status?: string) {
+  getQueue(status?: string, flaggedOnly = false) {
     let params = new HttpParams();
-    if (status) params = params.set('status', status);
+    if (status)      params = params.set('status', status);
+    if (flaggedOnly) params = params.set('flagged', 'true');
     return this.http.get<{ results: QueueMessage[]; count: number }>(
       `${this.base}/decisions/`, { params }
     );
   }
 
   decide(id: string, action: MessageStatus) {
+    // Backend expects 'approved' | 'blocked' | 'escalated'
     return this.http.post(`${this.base}/decisions/${id}/decide/`, { action });
   }
 

@@ -22,7 +22,7 @@ export interface QueueMessage {
   id: string;
   ts: number;
   sender: string;
-  recipient: string;
+  recipient?: string;
   cats: [string, number][];
   ar: string;
   en: string;
